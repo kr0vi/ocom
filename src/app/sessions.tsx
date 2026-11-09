@@ -42,6 +42,7 @@ export default function SessionsScreen() {
     eventStatus,
     subscribe,
     resyncToken,
+    disconnect,
   } = useConnection()
 
   const [sessions, setSessions] = useState<SessionInfo[]>([])
@@ -221,6 +222,23 @@ export default function SessionsScreen() {
     ])
   }
 
+  const confirmDisconnect = () => {
+    Alert.alert(
+      'Disconnect from Server',
+      `Are you sure you want to disconnect from ${connection?.label ?? 'the server'}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Disconnect',
+          style: 'destructive',
+          onPress: () => {
+            void disconnect()
+          },
+        },
+      ],
+    )
+  }
+
   const handleCreate = async (title: string, directory: string | null) => {
     if (!api) throw new Error('Not connected to an OpenCode server.')
     const session = await api.createSession({
@@ -242,9 +260,9 @@ export default function SessionsScreen() {
         </View>
         <View style={styles.headerActions}>
           <IconButton
-            icon="link-outline"
-            accessibilityLabel="Connection settings"
-            onPress={() => router.push('/connect')}
+            icon="log-out-outline"
+            accessibilityLabel="Disconnect from server"
+            onPress={confirmDisconnect}
             color={colors.textMuted}
             filled
           />

@@ -10,6 +10,7 @@ import {
   type TextProps,
   View,
   type StyleProp,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native'
 
@@ -33,6 +34,7 @@ type ButtonProps = {
   loading?: boolean
   disabled?: boolean
   style?: StyleProp<ViewStyle>
+  labelStyle?: StyleProp<TextStyle>
   compact?: boolean
 }
 
@@ -44,6 +46,7 @@ export function Button({
   loading = false,
   disabled = false,
   style,
+  labelStyle,
   compact = false,
 }: ButtonProps) {
   const isDisabled = disabled || loading
@@ -84,6 +87,7 @@ export function Button({
           styles.buttonLabel,
           compact && styles.buttonLabelCompact,
           { color: foreground },
+          labelStyle,
         ]}
         numberOfLines={1}
       >

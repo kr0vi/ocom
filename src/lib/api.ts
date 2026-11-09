@@ -91,9 +91,15 @@ export function hostLabel(baseUrl: string): string {
 }
 
 export function parsePairLink(link: string): { baseUrl: string; code: string } {
+  const cleanedLink = link
+    .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, '')
+    .trim()
+  const urlMatch = cleanedLink.match(/https?:\/\/[^\s"'<>]+/i)
+  const candidate = (urlMatch?.[0] ?? cleanedLink).replace(/[),.;]+$/, '')
+
   let url: URL
   try {
-    url = new URL(link.trim())
+    url = new URL(candidate)
   } catch {
     throw new Error('Paste the full pairing link printed by `opencode pair --remote`.')
   }

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import { router, useLocalSearchParams } from 'expo-router'
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -18,36 +18,73 @@ import { errorText } from '@/lib/format'
 import { colors, font, radius, spacing } from '@/lib/theme'
 import { AppText as Text, AppTextInput as TextInput, Button, Card, IconButton } from '@/components/ui'
 
-type Mode = 'pair' | 'password'
-
 export default function ConnectScreen() {
   const params = useLocalSearchParams<{ url?: string }>()
   const {
     connection,
+    api,
+    loading: connectionLoading,
+    eventStatus,
     pairWithLink,
-    connectManual,
     disconnect,
   } = useConnection()
 
-  const [mode, setMode] = useState<Mode>('pair')
   const [link, setLink] = useState('')
-  const [url, setUrl] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [scannerOpen, setScannerOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [permission, requestPermission] = useCameraPermissions()
   const scannedRef = useRef(false)
 
-  // Handle `opencode-mobile://connect?url=...` deep links. Adjusting state
-  // during render is the recommended way to react to a changed prop.
+  // Handle `opencode-mobile://connect?url=...` deep links
   const deepLink = typeof params.url === 'string' ? params.url : ''
   const [appliedDeepLink, setAppliedDeepLink] = useState<string | null>(null)
   if (deepLink && deepLink !== appliedDeepLink) {
     setAppliedDeepLink(deepLink)
-    setMode('pair')
     setLink(deepLink)
+  }
+
+  // If credentials exist and connection works, redirect to sessions screen immediately
+  const shouldVerify = Boolean(connection && api && !deepLink)
+  const [verifyFailed, setVerifyFailed] = useState(false)
+  const verifying = shouldVerify && !verifyFailed
+
+  useEffect(() => {
+    if (!shouldVerify || verifyFailed || !api) return
+
+    // If event stream is already live, we know the connection is active
+    if (eventStatus === 'live') {
+      router.replace('/sessions')
+      return
+    }
+
+    let active = true
+    api
+      .info()
+      .then(() => {
+        if (active) {
+          router.replace('/sessions')
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setVerifyFailed(true)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [shouldVerify, verifyFailed, api, eventStatus])
+
+  if (connectionLoading || verifying) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <View style={styles.centerLoading}>
+          <ActivityIndicator size="large" color={colors.accent} />
+        </View>
+      </SafeAreaView>
+    )
   }
 
   const run = async (action: () => Promise<unknown>) => {
@@ -98,65 +135,40 @@ export default function ConnectScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.brand}>
-            <View style={styles.logo}>
-              <Ionicons name="terminal" size={26} color={colors.accent} />
+          <View style={styles.container}>
+            <View style={styles.brand}>
+              <View style={styles.logo}>
+                <Ionicons name="terminal" size={20} color={colors.accent} />
+              </View>
+              <Text style={styles.title}>OpenCode Remote</Text>
+              <Text style={styles.subtitle}>
+                Control an OpenCode server running on your computer, from your phone.
+              </Text>
             </View>
-            <Text style={styles.title}>OpenCode Remote</Text>
-            <Text style={styles.subtitle}>
-              Control an OpenCode server running on your computer, from your phone.
-            </Text>
-          </View>
 
-          {connection ? (
-            <Card style={styles.connectedCard}>
-              <View style={styles.connectedRow}>
-                <View style={styles.connectedIcon}>
-                  <Ionicons name="checkmark" size={18} color={colors.green} />
+            {connection ? (
+              <Card style={styles.offlineCard}>
+                <View style={styles.offlineRow}>
+                  <Ionicons name="cloud-offline-outline" size={18} color={colors.amber} />
+                  <View style={styles.offlineText}>
+                    <Text style={styles.offlineTitle}>Previous connection unavailable</Text>
+                    <Text style={styles.offlineHost} numberOfLines={1}>
+                      {connection.label}
+                    </Text>
+                  </View>
+                  <Button
+                    label="Clear"
+                    variant="secondary"
+                    compact
+                    onPress={() => void disconnect()}
+                  />
                 </View>
-                <View style={styles.connectedText}>
-                  <Text style={styles.connectedTitle}>Connected</Text>
-                  <Text style={styles.connectedHost} numberOfLines={1}>
-                    {connection.label}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.connectedActions}>
-                <Button
-                  label="Continue"
-                  onPress={() => router.replace('/sessions')}
-                  style={styles.flex}
-                />
-                <Button
-                  label="Disconnect"
-                  variant="secondary"
-                  onPress={() => void disconnect()}
-                  style={styles.flex}
-                />
-              </View>
-            </Card>
-          ) : null}
+              </Card>
+            ) : null}
 
-          <View style={styles.segmented}>
-            <Segment
-              label="Pairing link"
-              icon="qr-code-outline"
-              active={mode === 'pair'}
-              onPress={() => setMode('pair')}
-            />
-            <Segment
-              label="Password"
-              icon="key-outline"
-              active={mode === 'password'}
-              onPress={() => setMode('password')}
-            />
-          </View>
-
-          {mode === 'pair' ? (
             <Card style={styles.card}>
-              <Text style={styles.cardTitle}>Scan from your PC</Text>
               <Text style={styles.cardBody}>
-                Run the command below, then scan the QR code it prints.
+                Run the command below in your terminal, then scan the QR code it prints.
               </Text>
 
               <View style={styles.command}>
@@ -198,7 +210,7 @@ export default function ConnectScreen() {
                     {permission === null ? (
                       <ActivityIndicator size="small" color={colors.accent} />
                     ) : (
-                      <Ionicons name="scan-outline" size={30} color={colors.accent} />
+                      <Ionicons name="scan-outline" size={22} color={colors.accent} />
                     )}
                   </View>
                   <Text style={styles.scanLabel}>Scan pairing QR code</Text>
@@ -226,140 +238,28 @@ export default function ConnectScreen() {
               />
 
               <Button
-                label="Connect with pairing link"
-                icon="link-outline"
+                label="Connect"
+                compact
                 onPress={() => void run(() => pairWithLink(link))}
                 loading={busy}
                 disabled={!link.trim() || scannerOpen}
+                style={styles.connectButton}
+                labelStyle={styles.connectButtonLabel}
               />
             </Card>
-          ) : (
-            <Card style={styles.card}>
-              <Text style={styles.cardTitle}>Manual connection</Text>
-              <Text style={styles.cardBody}>
-                Use the server address and password. This also works with a LAN address or any
-                HTTPS tunnel.
-              </Text>
 
-              <Field label="Server URL">
-                <TextInput
-                  value={url}
-                  onChangeText={setUrl}
-                  placeholder="https://your-server.example"
-                  placeholderTextColor={colors.textFaint}
-                  style={styles.input}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="url"
-                  keyboardAppearance="dark"
-                />
-              </Field>
-
-              <Field label="Password">
-                <View style={styles.passwordRow}>
-                  <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Server password"
-                    placeholderTextColor={colors.textFaint}
-                    style={[styles.input, styles.passwordInput]}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    secureTextEntry={!showPassword}
-                    keyboardAppearance="dark"
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                    onPress={() => setShowPassword((value) => !value)}
-                    hitSlop={8}
-                    style={styles.eyeButton}
-                  >
-                    <Ionicons
-                      name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                      size={19}
-                      color={colors.textMuted}
-                    />
-                  </Pressable>
-                </View>
-              </Field>
-
-              <Button
-                label="Connect"
-                icon="log-in-outline"
-                onPress={() => void run(() => connectManual(url, password))}
-                loading={busy}
-                disabled={!url.trim() || !password.trim()}
-              />
-            </Card>
-          )}
-
-          {error ? (
-            <View style={styles.errorBox}>
-              <Ionicons name="alert-circle-outline" size={17} color={colors.red} />
-              <Text selectable style={styles.errorText}>
-                {error}
-              </Text>
-            </View>
-          ) : null}
-
-          <View style={styles.steps}>
-            <Text style={styles.stepsTitle}>How it works</Text>
-            <Step index="1" text="Start OpenCode on your computer." />
-            <Step index="2" text="Run the pairing command and scan the QR code." />
-            <Step index="3" text="Chat, watch progress, and approve tool permissions." />
-            <Text style={styles.stepsFootnote}>
-              Pairing links work once and expire after 5 minutes. The connection is stored securely
-              on this device.
-            </Text>
+            {error ? (
+              <View style={styles.errorBox}>
+                <Ionicons name="alert-circle-outline" size={15} color={colors.red} />
+                <Text selectable style={styles.errorText}>
+                  {error}
+                </Text>
+              </View>
+            ) : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  )
-}
-
-function Segment({
-  label,
-  icon,
-  active,
-  onPress,
-}: {
-  label: string
-  icon: keyof typeof Ionicons.glyphMap
-  active: boolean
-  onPress: () => void
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected: active }}
-      onPress={onPress}
-      style={[styles.segment, active && styles.segmentActive]}
-    >
-      <Ionicons name={icon} size={16} color={active ? colors.accent : colors.textMuted} />
-      <Text style={[styles.segmentLabel, active && styles.segmentLabelActive]}>{label}</Text>
-    </Pressable>
-  )
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      {children}
-    </View>
-  )
-}
-
-function Step({ index, text }: { index: string; text: string }) {
-  return (
-    <View style={styles.step}>
-      <View style={styles.stepIndex}>
-        <Text style={styles.stepIndexText}>{index}</Text>
-      </View>
-      <Text style={styles.stepText}>{text}</Text>
-    </View>
   )
 }
 
@@ -368,174 +268,151 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg,
   },
+  centerLoading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   flex: {
     flex: 1,
   },
   content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    gap: spacing.lg,
+    padding: spacing.md,
+    paddingBottom: spacing.xl,
+  },
+  container: {
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
+    gap: spacing.md,
   },
   brand: {
     alignItems: 'center',
-    paddingTop: spacing.xl,
-    gap: spacing.sm,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xs,
+    gap: 6,
   },
   logo: {
-    width: 62,
-    height: 62,
-    borderRadius: radius.lg,
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
     backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 2,
   },
   title: {
     color: colors.text,
-    fontSize: 26,
-    fontWeight: '800',
-    letterSpacing: -0.5,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    textAlign: 'center',
   },
   subtitle: {
     color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 18,
     textAlign: 'center',
-    maxWidth: 320,
+    maxWidth: 290,
   },
-  connectedCard: {
-    gap: spacing.md,
-    backgroundColor: 'rgba(74, 222, 128, 0.06)',
+  offlineCard: {
+    backgroundColor: colors.amberSoft,
+    padding: spacing.sm + 4,
+    borderRadius: radius.md,
   },
-  connectedRow: {
+  offlineRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
-  connectedIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    backgroundColor: colors.greenSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  connectedText: {
+  offlineText: {
     flex: 1,
     gap: 1,
   },
-  connectedTitle: {
+  offlineTitle: {
     color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  connectedHost: {
-    color: colors.textMuted,
     fontSize: 12,
-    fontFamily: font.mono,
-  },
-  connectedActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  segmented: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: 4,
-    gap: 4,
-  },
-  segment: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    height: 40,
-    borderRadius: radius.sm,
-  },
-  segmentActive: {
-    backgroundColor: colors.surfaceAlt,
-  },
-  segmentLabel: {
-    color: colors.textMuted,
-    fontSize: 13,
     fontWeight: '600',
+    textAlign: 'center',
   },
-  segmentLabelActive: {
-    color: colors.text,
+  offlineHost: {
+    color: colors.textMuted,
+    fontSize: 10.5,
+    fontFamily: font.mono,
+    textAlign: 'center',
   },
   card: {
     gap: spacing.md,
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: 17,
-    fontWeight: '700',
+    padding: spacing.md + 2,
   },
   cardBody: {
     color: colors.textMuted,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   command: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.sm,
     backgroundColor: colors.codeBg,
-    borderRadius: radius.md,
+    borderRadius: radius.sm + 2,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm + 2,
   },
   commandPrompt: {
     color: colors.green,
     fontFamily: font.mono,
-    fontSize: 13,
+    fontSize: 11.5,
   },
   commandText: {
     color: colors.text,
     fontFamily: font.mono,
-    fontSize: 13,
+    fontSize: 11.5,
+    textAlign: 'center',
   },
   scanPlaceholder: {
-    height: 190,
-    borderRadius: radius.lg,
+    height: 140,
+    borderRadius: radius.md,
     backgroundColor: colors.bgElevated,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
+    gap: 2,
   },
   scanIcon: {
-    width: 58,
-    height: 58,
-    borderRadius: radius.lg,
+    width: 42,
+    height: 42,
+    borderRadius: radius.md,
     backgroundColor: colors.accentSoft,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 4,
   },
   scanLabel: {
     color: colors.text,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '600',
+    textAlign: 'center',
   },
   scanSub: {
     color: colors.textFaint,
-    fontSize: 12,
+    fontSize: 11,
+    textAlign: 'center',
   },
   cameraBox: {
-    height: 260,
-    borderRadius: radius.lg,
+    height: 220,
+    borderRadius: radius.md,
     overflow: 'hidden',
     backgroundColor: '#000',
   },
   scanFrame: {
     position: 'absolute',
-    top: '22%',
+    top: '20%',
     left: '20%',
     right: '20%',
-    bottom: '22%',
-    borderRadius: radius.md,
+    bottom: '20%',
+    borderRadius: radius.sm,
   },
   cameraTopBar: {
     position: 'absolute',
@@ -543,15 +420,16 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
   cameraHint: {
     color: colors.white,
-    fontSize: 12,
+    fontSize: 11,
     flex: 1,
+    textAlign: 'center',
   },
   cameraClose: {
     backgroundColor: 'rgba(0,0,0,0.45)',
@@ -559,7 +437,7 @@ const styles = StyleSheet.create({
   orRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   orLine: {
     flex: 1,
@@ -568,102 +446,53 @@ const styles = StyleSheet.create({
   },
   orText: {
     color: colors.textFaint,
-    fontSize: 11,
+    fontSize: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
+    textAlign: 'center',
   },
   input: {
     backgroundColor: colors.bgElevated,
-    borderRadius: radius.md,
+    borderRadius: radius.sm + 2,
     color: colors.text,
-    fontSize: 14,
+    fontSize: 12.5,
     paddingHorizontal: spacing.md,
-    height: 48,
+    height: 44,
+    textAlign: 'center',
   },
   multiline: {
-    height: 66,
-    paddingTop: spacing.md,
-    textAlignVertical: 'top',
-  },
-  field: {
-    gap: spacing.sm,
-  },
-  fieldLabel: {
-    color: colors.textFaint,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
-  passwordRow: {
-    position: 'relative',
-  },
-  passwordInput: {
-    paddingRight: 48,
-  },
-  eyeButton: {
-    position: 'absolute',
-    right: 4,
-    top: 4,
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: 52,
+    paddingTop: spacing.sm + 2,
+    textAlignVertical: 'center',
   },
   errorBox: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.sm,
     backgroundColor: colors.redSoft,
     borderRadius: radius.md,
-    padding: spacing.md,
+    padding: spacing.sm + 2,
   },
   errorText: {
     color: colors.red,
-    fontSize: 13,
-    lineHeight: 19,
-    flex: 1,
-  },
-  steps: {
-    gap: spacing.md,
-    padding: spacing.lg,
-    borderRadius: radius.lg,
-    backgroundColor: colors.bgElevated,
-  },
-  stepsTitle: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  step: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  stepIndex: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepIndexText: {
-    color: colors.accent,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  stepText: {
-    color: colors.textMuted,
-    fontSize: 13,
-    flex: 1,
-    lineHeight: 19,
-  },
-  stepsFootnote: {
-    color: colors.textFaint,
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 17,
+    textAlign: 'center',
+    flex: 1,
+  },
+  connectButton: {
+    alignSelf: 'center',
+    minHeight: 34,
+    height: 34,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.pill,
     marginTop: spacing.xs,
+  },
+  connectButtonLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   pressed: {
     opacity: 0.75,
