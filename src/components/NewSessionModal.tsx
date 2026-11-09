@@ -8,17 +8,20 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useConnection } from '@/lib/connection'
 import { basename, compactPath, errorText } from '@/lib/format'
-import { colors, radius, spacing } from '@/lib/theme'
+import { colors, font, radius, spacing } from '@/lib/theme'
 import type { Project } from '@/lib/types'
-import { Button, IconButton } from './ui'
+import {
+  AppText as Text,
+  AppTextInput as TextInput,
+  Button,
+  IconButton,
+} from './ui'
 
 export function NewSessionModal({
   visible,
@@ -239,8 +242,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgElevated,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
-    borderTopWidth: 1,
-    borderColor: colors.border,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     gap: spacing.md,
@@ -266,8 +267,6 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.md,
     color: colors.text,
     fontSize: 15,
@@ -305,12 +304,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: 'transparent',
   },
   projectRowSelected: {
     backgroundColor: colors.accentSoft,
-    borderColor: colors.accentBorder,
   },
   projectRowPressed: {
     backgroundColor: colors.surfaceAlt,
@@ -327,14 +323,12 @@ const styles = StyleSheet.create({
   projectSublabel: {
     color: colors.textFaint,
     fontSize: 11,
-    fontFamily: 'monospace',
+    fontFamily: font.mono,
   },
   radio: {
     width: 18,
     height: 18,
     borderRadius: 9,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
   },
   errorRow: {
     flexDirection: 'row',

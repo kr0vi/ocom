@@ -1,9 +1,9 @@
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 
 import type { EventStatus } from '@/lib/events'
 import { colors, radius, spacing } from '@/lib/theme'
-import { StatusDot } from './ui'
+import { AppText as Text, StatusDot } from './ui'
 
 const meta: Record<EventStatus, { color: string; label: string; bg: string }> = {
   live: { color: colors.green, label: 'Live', bg: colors.greenSoft },

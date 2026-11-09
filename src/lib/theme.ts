@@ -1,26 +1,26 @@
 export const colors = {
-  bg: '#0B0D10',
-  bgElevated: '#101318',
-  surface: '#15191F',
-  surfaceAlt: '#1B2028',
-  surfacePressed: '#232A34',
-  border: '#242B35',
-  borderStrong: '#313A47',
-  text: '#E9ECF1',
-  textMuted: '#94A0AF',
-  textFaint: '#68727F',
-  accent: '#7C9CFF',
-  accentStrong: '#5C84FF',
-  accentSoft: 'rgba(124, 156, 255, 0.14)',
-  accentBorder: 'rgba(124, 156, 255, 0.34)',
+  bg: '#171717',
+  bgElevated: '#1B1B1B',
+  surface: '#1F1F1F',
+  surfaceAlt: '#252525',
+  surfacePressed: '#2B2B2B',
+  border: 'transparent',
+  borderStrong: '#2B2B2B',
+  text: '#DEDEDE',
+  textMuted: '#9B9A97',
+  textFaint: '#9B9A97',
+  accent: '#DEDEDE',
+  accentStrong: '#DEDEDE',
+  accentSoft: '#252525',
+  accentBorder: 'transparent',
   green: '#4ADE80',
   greenSoft: 'rgba(74, 222, 128, 0.13)',
   amber: '#FBBF24',
   amberSoft: 'rgba(251, 191, 36, 0.13)',
   red: '#F87171',
   redSoft: 'rgba(248, 113, 113, 0.13)',
-  codeBg: '#0D1014',
-  white: '#FFFFFF',
+  codeBg: '#1F1F1F',
+  white: '#DEDEDE',
 } as const
 
 export const spacing = {
@@ -42,7 +42,8 @@ export const radius = {
 } as const
 
 export const font = {
-  mono: 'monospace' as const,
+  regular: 'Inter_400Regular' as const,
+  mono: 'Inter_400Regular' as const,
 }
 
 export const layout = {

@@ -4,12 +4,11 @@ import {
   ActivityIndicator,
   Pressable,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native'
 
 import { colors, radius, spacing } from '@/lib/theme'
+import { AppText as Text, AppTextInput as TextInput } from './ui'
 
 export function Composer({
   value,
@@ -86,8 +85,6 @@ export function Composer({
 
 const styles = StyleSheet.create({
   container: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
     backgroundColor: colors.bgElevated,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
@@ -110,8 +107,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     backgroundColor: colors.redSoft,
-    borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.3)',
     paddingHorizontal: spacing.md,
     height: 30,
     borderRadius: radius.pill,
@@ -126,15 +121,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing.sm,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.lg,
     paddingLeft: spacing.lg,
     paddingRight: spacing.sm,
     paddingVertical: spacing.sm,
   },
   inputRowFocused: {
-    borderColor: colors.accentBorder,
   },
   input: {
     flex: 1,

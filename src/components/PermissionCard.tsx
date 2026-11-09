@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons'
 import React, { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 
 import { colors, font, radius, spacing } from '@/lib/theme'
 import type { PermissionDecision, PermissionRequest } from '@/lib/types'
-import { Button } from './ui'
+import { AppText as Text, Button } from './ui'
 
 export function PermissionCard({
   request,
@@ -83,8 +83,6 @@ export function PermissionCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.amberSoft,
-    borderColor: 'rgba(251, 191, 36, 0.34)',
-    borderWidth: 1,
     borderRadius: radius.lg,
     padding: spacing.lg,
     gap: spacing.md,
@@ -123,7 +121,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   resources: {
-    backgroundColor: 'rgba(11, 13, 16, 0.55)',
+    backgroundColor: colors.surface,
     borderRadius: radius.md,
     padding: spacing.md,
     gap: spacing.xs,

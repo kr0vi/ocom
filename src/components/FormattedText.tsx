@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 
 import { colors, font, radius, spacing } from '@/lib/theme'
+import { AppText as Text } from './ui'
 
 type Segment =
   | { type: 'text'; content: string }
@@ -62,8 +63,6 @@ const styles = StyleSheet.create({
   },
   codeBlock: {
     backgroundColor: colors.codeBg,
-    borderColor: colors.border,
-    borderWidth: 1,
     borderRadius: radius.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,

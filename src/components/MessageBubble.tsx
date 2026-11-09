@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import React, { useMemo, useState } from 'react'
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native'
 
 import { clockTime } from '@/lib/format'
 import { colors, font, radius, spacing } from '@/lib/theme'
@@ -14,6 +14,7 @@ import {
   type ToolPart,
 } from '@/lib/types'
 import { FormattedText } from './FormattedText'
+import { AppText as Text } from './ui'
 
 function modelLabel(message: Message): string {
   const model = message.model as { modelID?: string; providerID?: string } | undefined
@@ -268,8 +269,6 @@ const styles = StyleSheet.create({
   userBubble: {
     maxWidth: '88%',
     backgroundColor: colors.accentSoft,
-    borderColor: colors.accentBorder,
-    borderWidth: 1,
     borderRadius: radius.lg,
     borderBottomRightRadius: radius.xs,
     paddingHorizontal: spacing.lg,
@@ -318,8 +317,6 @@ const styles = StyleSheet.create({
   },
   assistantBody: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.lg,
     borderTopLeftRadius: radius.xs,
     padding: spacing.lg,
@@ -341,8 +338,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   reasoning: {
-    borderLeftWidth: 2,
-    borderLeftColor: colors.borderStrong,
     paddingLeft: spacing.md,
     gap: spacing.sm,
   },
@@ -369,8 +364,6 @@ const styles = StyleSheet.create({
   },
   tool: {
     backgroundColor: colors.bgElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -423,8 +416,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: spacing.sm,
     backgroundColor: colors.redSoft,
-    borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.28)',
     borderRadius: radius.md,
     padding: spacing.md,
   },

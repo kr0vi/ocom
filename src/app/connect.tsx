@@ -9,8 +9,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -18,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useConnection } from '@/lib/connection'
 import { errorText } from '@/lib/format'
 import { colors, font, radius, spacing } from '@/lib/theme'
-import { Button, Card, IconButton } from '@/components/ui'
+import { AppText as Text, AppTextInput as TextInput, Button, Card, IconButton } from '@/components/ui'
 
 type Mode = 'pair' | 'password'
 
@@ -388,8 +386,6 @@ const styles = StyleSheet.create({
     height: 62,
     borderRadius: radius.lg,
     backgroundColor: colors.accentSoft,
-    borderWidth: 1,
-    borderColor: colors.accentBorder,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
@@ -409,7 +405,6 @@ const styles = StyleSheet.create({
   },
   connectedCard: {
     gap: spacing.md,
-    borderColor: 'rgba(74, 222, 128, 0.25)',
     backgroundColor: 'rgba(74, 222, 128, 0.06)',
   },
   connectedRow: {
@@ -446,8 +441,6 @@ const styles = StyleSheet.create({
   segmented: {
     flexDirection: 'row',
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.md,
     padding: 4,
     gap: 4,
@@ -490,8 +483,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
     backgroundColor: colors.codeBg,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
@@ -509,9 +500,6 @@ const styles = StyleSheet.create({
   scanPlaceholder: {
     height: 190,
     borderRadius: radius.lg,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: colors.borderStrong,
     backgroundColor: colors.bgElevated,
     alignItems: 'center',
     justifyContent: 'center',
@@ -547,8 +535,6 @@ const styles = StyleSheet.create({
     left: '20%',
     right: '20%',
     bottom: '22%',
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.85)',
     borderRadius: radius.md,
   },
   cameraTopBar: {
@@ -569,7 +555,6 @@ const styles = StyleSheet.create({
   },
   cameraClose: {
     backgroundColor: 'rgba(0,0,0,0.45)',
-    borderColor: 'rgba(255,255,255,0.2)',
   },
   orRow: {
     flexDirection: 'row',
@@ -589,8 +574,6 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: colors.bgElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radius.md,
     color: colors.text,
     fontSize: 14,
@@ -632,8 +615,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: spacing.sm,
     backgroundColor: colors.redSoft,
-    borderWidth: 1,
-    borderColor: 'rgba(248, 113, 113, 0.28)',
     borderRadius: radius.md,
     padding: spacing.md,
   },
@@ -648,8 +629,6 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: radius.lg,
     backgroundColor: colors.bgElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   stepsTitle: {
     color: colors.text,

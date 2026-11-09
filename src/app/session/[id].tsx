@@ -9,7 +9,6 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -18,10 +17,10 @@ import { Composer } from '@/components/Composer'
 import { ConnectionStatus } from '@/components/ConnectionStatus'
 import { MessageBubble } from '@/components/MessageBubble'
 import { PermissionCard } from '@/components/PermissionCard'
-import { Button, IconButton } from '@/components/ui'
+import { AppText as Text, Button, IconButton } from '@/components/ui'
 import { useConnection } from '@/lib/connection'
 import { basename, errorText } from '@/lib/format'
-import { colors, radius, spacing } from '@/lib/theme'
+import { colors, font, radius, spacing } from '@/lib/theme'
 import { applyEventToMessages } from '@/lib/timeline'
 import type {
   Message,
@@ -445,8 +444,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
     backgroundColor: colors.bgElevated,
   },
   headerText: {
@@ -462,15 +459,13 @@ const styles = StyleSheet.create({
   subtitle: {
     color: colors.textFaint,
     fontSize: 11,
-    fontFamily: 'monospace',
+    fontFamily: font.mono,
   },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.sm,
     backgroundColor: colors.redSoft,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(248, 113, 113, 0.28)',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
@@ -492,8 +487,6 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: radius.xl,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xs,
@@ -513,7 +506,7 @@ const styles = StyleSheet.create({
   emptyPath: {
     color: colors.textFaint,
     fontSize: 11,
-    fontFamily: 'monospace',
+    fontFamily: font.mono,
     textAlign: 'center',
     marginTop: spacing.xs,
   },

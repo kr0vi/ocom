@@ -8,17 +8,16 @@ import {
   Pressable,
   RefreshControl,
   StyleSheet,
-  Text,
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { ConnectionStatus } from '@/components/ConnectionStatus'
 import { NewSessionModal } from '@/components/NewSessionModal'
-import { Badge, Button, Card, IconButton } from '@/components/ui'
+import { AppText as Text, Badge, Button, Card, IconButton } from '@/components/ui'
 import { useConnection } from '@/lib/connection'
 import { basename, errorText, pluralize, relativeTime, truncate } from '@/lib/format'
-import { colors, radius, spacing } from '@/lib/theme'
+import { colors, font, radius, spacing } from '@/lib/theme'
 import type { PermissionRequest, SessionInfo } from '@/lib/types'
 
 function isBusy(session: SessionInfo): boolean {
@@ -440,7 +439,7 @@ const styles = StyleSheet.create({
   host: {
     color: colors.textFaint,
     fontSize: 12,
-    fontFamily: 'monospace',
+    fontFamily: font.mono,
   },
   headerActions: {
     flexDirection: 'row',
@@ -449,7 +448,6 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: colors.accent,
-    borderColor: colors.accent,
   },
   statusRow: {
     flexDirection: 'row',
@@ -478,8 +476,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.md,
     backgroundColor: colors.amberSoft,
-    borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.28)',
   },
   bannerIcon: {
     width: 34,
@@ -506,7 +502,6 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.lg,
     marginVertical: spacing.sm,
     gap: spacing.md,
-    borderColor: 'rgba(248, 113, 113, 0.26)',
     backgroundColor: colors.redSoft,
   },
   errorRow: {
@@ -547,8 +542,6 @@ const styles = StyleSheet.create({
     paddingRight: spacing.xs,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   rowButton: {
     flex: 1,
@@ -590,7 +583,7 @@ const styles = StyleSheet.create({
   rowDir: {
     color: colors.textFaint,
     fontSize: 11.5,
-    fontFamily: 'monospace',
+    fontFamily: font.mono,
     maxWidth: '62%',
   },
   dot: {
@@ -619,8 +612,6 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: radius.xl,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
