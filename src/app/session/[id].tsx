@@ -195,6 +195,7 @@ export default function SessionScreen() {
         case 'session.execution.failed':
         case 'session.execution.interrupted':
           setBusy(false)
+          setStreamingID(null)
           return
 
         case 'session.idle':

@@ -55,6 +55,7 @@ function describeError(status: number, body: string): string {
 }
 
 function authorizationHeader(connection: Pick<Connection, 'token' | 'auth'>): string {
+  if (!connection.token) return ''
   if (connection.auth === 'bearer') return `Bearer ${connection.token}`
   return `Basic ${encodeBase64(`opencode:${connection.token}`)}`
 }
@@ -90,31 +91,85 @@ export function hostLabel(baseUrl: string): string {
   }
 }
 
-export function parsePairLink(link: string): { baseUrl: string; code: string } {
+export type ParsedConnectionLink = {
+  baseUrl: string
+  code?: string
+  token?: string
+}
+
+export function parsePairLink(link: string): ParsedConnectionLink {
   const cleanedLink = link
     .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, '')
     .trim()
+
+  // Handle deep link schemes: opencode-mobile://connect?url=... or opencode://connect?url=...
+  if (/^opencode(-mobile)?:\/\//i.test(cleanedLink)) {
+    try {
+      const deepUrl = new URL(cleanedLink)
+      const embedded = deepUrl.searchParams.get('url')
+      if (embedded) return parsePairLink(embedded)
+    } catch {
+      // Fall through to regular URL parsing
+    }
+  }
+
   const urlMatch = cleanedLink.match(/https?:\/\/[^\s"'<>]+/i)
-  const candidate = (urlMatch?.[0] ?? cleanedLink).replace(/[),.;]+$/, '')
+  let candidate = (urlMatch?.[0] ?? cleanedLink).replace(/[),.;]+$/, '')
+
+  if (!/^https?:\/\//i.test(candidate)) {
+    if (/^[a-z0-9.-]+(:[0-9]+)?(\/.*)?$/i.test(candidate)) {
+      candidate = `https://${candidate}`
+    }
+  }
 
   let url: URL
   try {
     url = new URL(candidate)
   } catch {
-    throw new Error('Paste the full pairing link printed by `opencode pair --remote`.')
+    throw new Error('Please enter or scan a valid connection link.')
   }
 
+  // 1. Check if it's an OpenCode pairing code link: /auth/connect/<code_here>
   const marker = '/auth/connect/'
   const index = url.pathname.indexOf(marker)
-  if (index === -1) {
-    throw new Error('That link does not contain an OpenCode pairing code.')
+  if (index !== -1) {
+    const code = decodeURIComponent(url.pathname.slice(index + marker.length).split('/')[0] ?? '')
+    if (code) {
+      const basePath = url.pathname.slice(0, index).replace(/\/+$/, '')
+      return { baseUrl: `${url.origin}${basePath}`, code }
+    }
   }
 
-  const code = decodeURIComponent(url.pathname.slice(index + marker.length).split('/')[0] ?? '')
-  if (!code) throw new Error('The pairing link is missing its code.')
+  // 2. Extract potential token or password from query parameters, basic auth, or hash
+  let token = ''
+  if (url.password) {
+    token = decodeURIComponent(url.password)
+  } else {
+    const tokenQuery =
+      url.searchParams.get('token') ||
+      url.searchParams.get('password') ||
+      url.searchParams.get('key') ||
+      url.searchParams.get('auth') ||
+      url.searchParams.get('code') ||
+      url.searchParams.get('secret')
+    if (tokenQuery) {
+      token = tokenQuery
+    } else if (url.hash) {
+      const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''))
+      const hashToken =
+        hashParams.get('token') || hashParams.get('password') || hashParams.get('key')
+      if (hashToken) token = hashToken
+    }
+  }
 
-  const basePath = url.pathname.slice(0, index).replace(/\/+$/, '')
-  return { baseUrl: `${url.origin}${basePath}`, code }
+  // Clean pathname (remove trailing slash)
+  const pathname = url.pathname.replace(/\/+$/, '')
+  const baseUrl = `${url.origin}${pathname}`
+
+  return {
+    baseUrl,
+    ...(token ? { token } : {}),
+  }
 }
 
 export async function redeemPairLink(baseUrl: string, code: string): Promise<string> {
@@ -297,10 +352,31 @@ export class OpenCodeApi {
 
 export async function probeConnection(
   baseUrl: string,
-  token: string,
-  modes: AuthMode[] = ['password', 'bearer'],
+  token = '',
+  modes: AuthMode[] = ['bearer', 'password'],
 ): Promise<{ connection: Connection; info: ServerInfo }> {
   let lastError: unknown = null
+
+  // If token is empty, test without auth header first
+  if (!token) {
+    const noAuthConn: Connection = {
+      baseUrl,
+      token: '',
+      auth: 'bearer',
+      label: hostLabel(baseUrl),
+      createdAt: Date.now(),
+    }
+    try {
+      const info = await new OpenCodeApi(noAuthConn).info()
+      return { connection: { ...noAuthConn, label: info.hostname || noAuthConn.label }, info }
+    } catch (error) {
+      lastError = error
+      if (error instanceof ApiError && error.status === 401) {
+        throw new Error('This OpenCode server requires a password or authentication token.')
+      }
+      throw error
+    }
+  }
 
   for (const auth of modes) {
     const connection: Connection = {

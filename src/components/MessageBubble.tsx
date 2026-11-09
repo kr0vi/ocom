@@ -134,22 +134,10 @@ function AssistantMessage({
 }) {
   const content = message.content ?? []
   const hasVisibleContent = content.length > 0
-  const model = modelLabel(message)
   const error = errorMessage(message.error)
 
   return (
     <View style={styles.assistantRow}>
-      <View style={styles.assistantHeader}>
-        <View style={styles.assistantAvatar}>
-          <Ionicons name="terminal" size={13} color={colors.accent} />
-        </View>
-        <Text style={styles.assistantName}>{message.agent ?? 'assistant'}</Text>
-        {model ? <Text style={styles.assistantModel}>{model}</Text> : null}
-        {streaming ? (
-          <ActivityIndicator size="small" color={colors.accent} style={styles.headerSpinner} />
-        ) : null}
-      </View>
-
       <View style={styles.assistantBody}>
         {!hasVisibleContent && streaming ? (
           <View style={styles.typing}>
@@ -232,13 +220,21 @@ export const MessageBubble = React.memo(function MessageBubble({
   const system = useMemo(() => systemText(message), [message])
 
   if (message.type === 'user') {
+    const time = clockTime(message.time?.created)
+
     return (
-      <View style={styles.userRow}>
-        <View style={styles.userBubble}>
-          <Text selectable style={styles.userText}>
-            {messageText(message)}
-          </Text>
-          <Text style={styles.userTime}>{clockTime(message.time?.created)}</Text>
+      <View style={styles.userContainer}>
+        {time ? (
+          <View style={styles.timeDivider}>
+            <Text style={styles.timeDividerText}>{time}</Text>
+          </View>
+        ) : null}
+        <View style={styles.userRow}>
+          <View style={styles.userBubble}>
+            <Text selectable style={styles.userText}>
+              {messageText(message)}
+            </Text>
+          </View>
         </View>
       </View>
     )
@@ -262,64 +258,46 @@ export const MessageBubble = React.memo(function MessageBubble({
 })
 
 const styles = StyleSheet.create({
+  userContainer: {
+    marginVertical: spacing.xs,
+  },
+  timeDivider: {
+    alignSelf: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.sm + 4,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+    marginBottom: spacing.xs,
+  },
+  timeDividerText: {
+    color: colors.textFaint,
+    fontSize: 11,
+    fontWeight: '500',
+    letterSpacing: 0.2,
+  },
   userRow: {
     alignItems: 'flex-end',
-    marginVertical: spacing.sm,
   },
   userBubble: {
-    maxWidth: '88%',
+    maxWidth: '85%',
     backgroundColor: colors.accentSoft,
     borderRadius: radius.lg,
     borderBottomRightRadius: radius.xs,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
-    gap: spacing.xs,
   },
   userText: {
     color: colors.text,
     fontSize: 15,
     lineHeight: 22,
   },
-  userTime: {
-    color: colors.textFaint,
-    fontSize: 10,
-    alignSelf: 'flex-end',
-  },
   assistantRow: {
     marginVertical: spacing.sm,
-    gap: spacing.xs,
-  },
-  assistantHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
     paddingHorizontal: 2,
   },
-  assistantAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.accentSoft,
-  },
-  assistantName: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  assistantModel: {
-    color: colors.textFaint,
-    fontSize: 11,
-  },
-  headerSpinner: {
-    transform: [{ scale: 0.7 }],
-  },
   assistantBody: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderTopLeftRadius: radius.xs,
-    padding: spacing.lg,
+    backgroundColor: 'transparent',
+    padding: 0,
     gap: spacing.md,
   },
   part: {
