@@ -6,6 +6,7 @@ export const colors = {
   surfacePressed: '#2B2B2B',
   border: 'transparent',
   borderStrong: '#2B2B2B',
+  borderBright: '#3A3A3A',
   text: '#DEDEDE',
   textMuted: '#9B9A97',
   textFaint: '#9B9A97',

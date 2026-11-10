@@ -206,6 +206,14 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.borderBright,
+    // subtle shadow for uplifted look
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 2,
   },
   buttonCompact: {
     minHeight: 38,
@@ -239,11 +247,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    // subtle shadow for uplifted look
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 2,
+
   },
   iconButtonFilled: {
     backgroundColor: colors.surfaceAlt,
@@ -252,6 +264,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfacePressed,
   },
   card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    // subtle shadow for uplifted look
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 2,
+
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,

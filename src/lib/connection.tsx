@@ -145,9 +145,17 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
 
   const pairWithLink = useCallback(
     async (link: string) => {
-      const { baseUrl, code } = parsePairLink(link)
-      const token = await redeemPairLink(baseUrl, code)
-      const { connection: next } = await probeConnection(baseUrl, token, ['password', 'bearer'])
+      const { baseUrl, code, token } = parsePairLink(link)
+      let connectionInfo: Awaited<ReturnType<typeof probeConnection>> | undefined
+      if (code) {
+        // Pairing link with code: redeem to obtain token first
+        const redeemedToken = await redeemPairLink(baseUrl, code)
+        connectionInfo = await probeConnection(baseUrl, redeemedToken, ['password', 'bearer'])
+      } else {
+        // Direct connection URL: token may be supplied or empty
+        connectionInfo = await probeConnection(baseUrl, token ?? '', ['password', 'bearer'])
+      }
+      const { connection: next } = connectionInfo
       await applyConnection(next)
       return next
     },

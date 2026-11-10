@@ -117,12 +117,29 @@ export default function ConnectScreen() {
     }
   }
 
+  const buildConnectUrl = (qrData: string): string | null => {
+    try {
+      const payload = JSON.parse(qrData);
+      if (!payload?.code || !payload?.urls?.[0]) return null;
+      const base = payload.urls[0].replace(/\/$/, '');
+      return `${base}/auth/connect/${payload.code}`;
+    } catch {
+      return qrData.startsWith('http') ? qrData : null;
+    }
+  };
+
   const onScanned = ({ data }: { data: string }) => {
-    if (scannedRef.current || busy) return
-    scannedRef.current = true
-    setScannerOpen(false)
-    void run(() => pairWithLink(data))
-  }
+    if (scannedRef.current || busy) return;
+    scannedRef.current = true;
+    setScannerOpen(false);
+
+    const url = buildConnectUrl(data);
+    if (url) {
+      void run(() => pairWithLink(url));
+    } else {
+      setError('Unable to read pairing QR code – please try again.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
