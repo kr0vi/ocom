@@ -1,8 +1,8 @@
-# OpenCode Remote
+# ocom - Open Code on Mobile
 
 **Control an [OpenCode](https://opencode.ai) server running on your computer from your Android phone.**
 
-OpenCode Remote is a mobile client for OpenCode. It connects to a live OpenCode server over HTTPS, lets you browse and start sessions, streams the agent's work in real time, and puts permission approvals in your pocket — so you can keep a session moving without being tied to your desk.
+ocom is a mobile client for OpenCode. It connects to a live OpenCode server over HTTPS, lets you browse and start sessions, streams the agent's work in real time, and puts permission approvals in your pocket — so you can keep a session moving without being tied to your desk.
 
 Built with Expo SDK 58, React Native 0.88, Expo Router, and TypeScript.
 
