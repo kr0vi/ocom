@@ -247,6 +247,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: colors.borderStrong,
     // subtle shadow for uplifted look
@@ -255,7 +260,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 1.5,
     elevation: 2,
-
   },
   iconButtonFilled: {
     backgroundColor: colors.surfaceAlt,
@@ -275,10 +279,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 1.5,
     elevation: 2,
-
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
   },
   badge: {
     minWidth: 22,

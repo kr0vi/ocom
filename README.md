@@ -1,24 +1,66 @@
 # OpenCode Remote
 
-A React Native (Expo) remote control for an [OpenCode](https://opencode.ai) server running on your computer. Pair your phone with the server over the internet, then browse sessions, chat with the agent, watch tool calls stream in, and approve permission requests from your pocket.
+**Control an [OpenCode](https://opencode.ai) server running on your computer from your Android phone.**
+
+OpenCode Remote is a mobile client for OpenCode. It connects to a live OpenCode server over HTTPS, lets you browse and start sessions, streams the agent's work in real time, and puts permission approvals in your pocket — so you can keep a session moving without being tied to your desk.
 
 Built with Expo SDK 58, React Native 0.88, Expo Router, and TypeScript.
+
+[**Download the latest Android APK**](../../releases/latest) · [Run from source](#run-from-source) · [How it works](#how-it-works)
+
+> The app is Android-first. The same codebase runs on iOS and web, but only Android has been exercised for distribution.
+
+## Download and install
+
+1. Open the [Releases page](../../releases/latest) and download the latest `open-code-mobile-vX.Y.Z.apk`.
+2. On your Android phone, open the downloaded file.
+3. If Android asks, allow **Install unknown apps** for your browser or file manager.
+4. Launch **OpenCode Remote** and pair it with your computer.
+
+The APK is signed for sideloading, not distributed through the Play Store. Only install builds you trust and verify that you downloaded them from this repository's Releases page.
+
+To install over USB instead:
+
+```bash
+adb install path/to/open-code-mobile.apk
+```
 
 ## What it does
 
 - **Pair over the internet** using OpenCode's OpenTunnel (`opencode pair --remote`) and a QR code, or connect manually with a server URL and password.
-- **Browse sessions** with busy/approval indicators, create new sessions (optionally in a specific project directory), and delete sessions.
-- **Chat** with the agent, stream reasoning and tool calls live over SSE, and stop a running turn.
-- **Approve permissions** — allow once, always allow, or reject tool requests from the session screen.
+- **Browse sessions** with busy and approval indicators, create sessions in a specific project directory, and delete sessions.
+- **Chat with the agent** and stream text, reasoning, and tool activity live over server-sent events.
+- **Approve permissions** — allow once, always allow, or reject tool requests directly from the session.
+- **Stay oriented** with batched streaming updates, a jump-to-latest button, quick-prompt chips, and a reconnect banner.
+- **Feel connected** with live connection status, haptic feedback, and automatic resync when the app returns to the foreground.
 
-## Requirements
+## How it works
+
+```text
+┌─────────────────────┐        HTTPS + SSE        ┌──────────────────────┐
+│  OpenCode Remote    │  ◄──────────────────────► │  OpenCode server     │
+│  Expo / React Native│   /api/session, /api/event │  on your computer    │
+└─────────────────────┘                           └──────────┬───────────┘
+                                                             │
+                                                             ▼
+                                                  ┌──────────────────────┐
+                                                  │  Your projects       │
+                                                  └──────────────────────┘
+```
+
+- The phone connects directly to your OpenCode server. There is no third-party backend in between.
+- `GET /api/event` is a single long-lived SSE stream for the whole app. Sessions, messages, and permissions are refetched after reconnects and when a turn goes idle.
+- Streaming events update a local timeline in small batches, which keeps the UI smooth while tools and text stream in.
+- Pairing uses OpenCode's OpenTunnel: `opencode pair --remote` prints a QR code and a single-use link. The app redeems the link for a token and stores it securely on the device.
+
+## Run from source
+
+### Requirements
 
 - Node.js 20+ and npm.
-- [Expo Go](https://expo.dev/go) on your Android device (or a development build).
+- [Expo Go](https://expo.dev/go) on your Android device, or an emulator.
 - OpenCode running on the computer you want to control.
-- The phone and computer do not need to be on the same network — pairing uses OpenTunnel.
-
-## Run the app
+- The phone and computer do not need to be on the same network when using OpenTunnel.
 
 ```bash
 npm install
@@ -33,7 +75,6 @@ Scan the QR code with Expo Go. The app opens the connection screen.
 - **Browser**: run `npm run web` and open the printed `http://localhost:8081` URL. The UI, pairing-link flow, manual connection, sessions, chat, and permissions all work. Two caveats:
   - QR scanning in the browser needs the Barcode Detection API. Chrome on Android/ChromeOS/macOS has it; other browsers need the optional `barcode-detector` package (`npm install barcode-detector`). Otherwise paste the pairing link.
   - The browser enforces CORS, so API/SSE requests may be rejected by the server depending on its configuration. Use the emulator or a phone to validate the real transport.
-
 
 Useful commands:
 
@@ -57,9 +98,9 @@ npx expo-doctor            # dependency / config checks
 
 2. OpenCode prints a pairing URL and QR code.
 
-3. In the app, choose **Pairing link**, then either:
+3. In the app, either:
    - tap **Scan pairing QR code** and point the camera at the QR code, or
-   - paste the link into the text field and tap **Connect with pairing link**.
+   - paste the link into the text field and tap **Connect**.
 
 Pairing links are single-use and expire after 5 minutes. The app stores the resulting session token securely on the device (`expo-secure-store`).
 
@@ -84,26 +125,105 @@ Useful for a LAN address, a reverse proxy, or any HTTPS tunnel:
    OPENCODE_PASSWORD="a-long-secret" opencode serve --port 4096
    ```
 
-2. In the app, choose **Password**, enter the server URL (for example `https://your-server.example` or `http://192.168.1.20:4096`) and the password, then tap **Connect**.
+2. In the app, enter the server URL (for example `https://your-server.example` or `http://192.168.1.20:4096`) and the password, then tap **Connect**.
 
 The app first tries HTTP Basic auth (`opencode:<password>`), then Bearer auth. Plain `http://` LAN addresses may be blocked by Android's cleartext traffic policy in release builds; use an HTTPS tunnel for remote access.
 
-## How live updates work
+## Build an APK
 
-The app opens a single server-sent-events connection to `GET /api/event` for the whole session. Because OpenCode events are live-only, the app refetches sessions, messages, and permissions after every reconnect and whenever a turn goes idle. Streaming text, reasoning, and tool results are merged locally so the timeline stays responsive.
+EAS Build compiles the app in the cloud, so you do not need Android Studio or Xcode on your computer. The `preview` profile in `eas.json` is configured to produce a directly installable `.apk`.
 
-## MVP limitations
+1. Sign in to Expo (free account):
+
+   ```bash
+   npx eas-cli@latest login
+   ```
+
+   On the first build, EAS asks to create/link the project and stores its ID in `app.json`.
+
+2. Build the APK:
+
+   ```bash
+   npx eas-cli@latest build -p android --profile preview
+   ```
+
+   The build runs in the cloud and prints a URL when finished.
+
+3. Download the `.apk` from the build page, or install it on a connected device:
+
+   ```bash
+   npx eas-cli@latest build:run -p android --latest
+   ```
+
+If you prefer to build locally, you need Android Studio/SDK and a JDK:
+
+```bash
+npx eas-cli@latest build -p android --profile preview --local
+```
+
+The `production` profile builds an `.aab` for the Play Store instead.
+
+### Publishing an APK on GitHub
+
+Use GitHub Releases for public downloads instead of committing the APK to the repository:
+
+1. Go to **Releases → Draft a new release**.
+2. Create a tag such as `v1.0.0`.
+3. Attach the built `.apk` as a release asset.
+4. Publish the release.
+
+The README's download link points to `../../releases/latest`, so it always opens the newest release. Keep the Android signing keystore safe: if it changes, new APKs will not install over an existing installation.
+
+## Project structure
+
+```text
+src/
+  app/                    Expo Router routes
+    _layout.tsx           Fonts, safe area, connection provider, stack
+    connect.tsx           Pairing, QR scanning, manual connection
+    sessions.tsx          Session list and new-session flow
+    session/[id].tsx      Chat timeline, permissions, composer
+  components/             Reusable UI (messages, composer, cards, buttons)
+  lib/
+    api.ts                Typed OpenCode HTTP client
+    connection.tsx        Saved connection + shared event stream
+    events.ts             SSE parser and reconnect loop
+    timeline.ts           Live event → message timeline merge
+    types.ts              API, message, and event types
+    theme.ts              Colors, spacing, typography
+```
+
+## Tech stack
+
+- Expo SDK 58 and React Native 0.88
+- TypeScript and Expo Router
+- Server-sent events through `GET /api/event`
+- `expo-secure-store` for credentials (localStorage on web)
+- `expo-camera` for QR pairing and `expo-haptics` for feedback
+
+## Security and privacy
+
+- Credentials are stored only on the device, in secure storage where available.
+- The app talks directly to your OpenCode server; there is no analytics or third-party backend.
+- Pairing links are single-use and expire after 5 minutes.
+- Sideloaded APKs bypass the Play Store. Only install release builds from a source you trust.
+
+## Limitations and roadmap
 
 - No push notifications. If the app is closed, permission requests are only visible the next time you open it.
 - One saved connection at a time.
-- Session list is capped at 50 sessions; the message timeline loads the latest 200 messages of a session.
+- The session list is capped at 50 sessions; the message timeline loads the latest 200 messages of a session.
 - No session forking, archiving, model/agent switching, or file attachments yet.
-- Built for Android first; the same code runs on iOS and web, but only Android has been exercised.
+- Android is the supported target. iOS and web run from source but are not distributed.
 
-## Building with EAS
+## Contributing
+
+Issues and pull requests are welcome. Before opening a PR, run:
 
 ```bash
-npx eas-cli@latest build --profile preview --platform android
+npm run typecheck
+npm run lint
+npx expo-doctor
 ```
 
-`eas.json` is not included yet; create profiles with `npx eas-cli@latest build:configure`. Since `android/` and `ios/` are not committed, native projects are generated by Expo's Continuous Native Generation from `app.json`.
+Please keep changes consistent with the existing structure and mobile-first UI patterns.

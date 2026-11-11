@@ -28,6 +28,7 @@ import {
 } from '@/components/ui'
 import { useConnection } from '@/lib/connection'
 import { basename, compactPath, errorText, pluralize, relativeTime, truncate } from '@/lib/format'
+import { successFeedback, warningFeedback } from '@/lib/haptics'
 import { colors, font, radius, spacing } from '@/lib/theme'
 import type { PermissionRequest, Project, SessionInfo } from '@/lib/types'
 
@@ -78,6 +79,7 @@ export default function SessionsScreen() {
   const [sending, setSending] = useState(false)
 
   const lastResync = useRef(resyncToken)
+  const loadedOnce = useRef(false)
   const [slideAnim] = useState(() => new Animated.Value(-sidebarWidth))
   const [fadeAnim] = useState(() => new Animated.Value(0))
 
@@ -85,8 +87,9 @@ export default function SessionsScreen() {
     async (refresh = false) => {
       if (!api) return
 
+      // Only show the full-screen spinner before the first successful load.
       if (refresh) setRefreshing(true)
-      else setLoading(true)
+      else if (!loadedOnce.current) setLoading(true)
 
       try {
         const [list, requests, projectList] = await Promise.all([
@@ -105,6 +108,7 @@ export default function SessionsScreen() {
           return projectList.length > 0 ? projectList[0] : null
         })
         setError(null)
+        loadedOnce.current = true
       } catch (cause) {
         setError(errorText(cause))
       } finally {
@@ -273,6 +277,7 @@ export default function SessionsScreen() {
               if (!api) return
               try {
                 await api.deleteSession(session.id)
+                warningFeedback()
                 setSessions((prev) => prev.filter((item) => item.id !== session.id))
               } catch (cause) {
                 Alert.alert('Could not delete session', errorText(cause))
@@ -331,6 +336,7 @@ export default function SessionsScreen() {
       ...(title ? { title } : {}),
       ...(targetDir ? { directory: targetDir } : {}),
     })
+    successFeedback()
     setSessions((prev) => [session, ...prev.filter((item) => item.id !== session.id)])
     closeSidebar(() => {
       router.push({ pathname: '/session/[id]', params: { id: session.id } })
@@ -349,6 +355,7 @@ export default function SessionsScreen() {
         ...(selectedProject?.canonical ? { directory: selectedProject.canonical } : {}),
       })
       await api.sendPrompt(session.id, text)
+      successFeedback()
       setPromptInput('')
       router.push({ pathname: '/session/[id]', params: { id: session.id } })
     } catch (cause) {

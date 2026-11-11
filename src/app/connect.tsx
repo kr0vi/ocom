@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -15,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { useConnection } from '@/lib/connection'
 import { errorText } from '@/lib/format'
+import { successFeedback, warningFeedback } from '@/lib/haptics'
 import { colors, font, radius, spacing } from '@/lib/theme'
 import { AppText as Text, AppTextInput as TextInput, Button, Card, IconButton } from '@/components/ui'
 
@@ -93,6 +95,7 @@ export default function ConnectScreen() {
     setError(null)
     try {
       await action()
+      successFeedback()
       router.replace('/sessions')
     } catch (cause) {
       setError(errorText(cause))
@@ -100,6 +103,29 @@ export default function ConnectScreen() {
     } finally {
       setBusy(false)
     }
+  }
+
+  const handleClear = () => {
+    const clear = async () => {
+      warningFeedback()
+      await disconnect()
+    }
+
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm('Forget this saved connection?')) {
+        void clear()
+      }
+      return
+    }
+
+    Alert.alert(
+      'Forget connection?',
+      `The saved credentials for ${connection?.label ?? 'this server'} will be removed from this device.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Forget', style: 'destructive', onPress: () => void clear() },
+      ],
+    )
   }
 
   const openScanner = async () => {
@@ -177,7 +203,7 @@ export default function ConnectScreen() {
                     label="Clear"
                     variant="secondary"
                     compact
-                    onPress={() => void disconnect()}
+                    onPress={handleClear}
                   />
                 </View>
               </Card>

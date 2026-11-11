@@ -61,63 +61,45 @@ function ToolBlock({ part }: { part: ToolPart }) {
   const [open, setOpen] = useState(false)
   const status = part.state.status
 
-  const statusMeta = {
-    streaming: { label: 'preparing', color: colors.amber, icon: 'ellipsis-horizontal' as const },
-    running: { label: 'running', color: colors.amber, icon: 'sync-outline' as const },
-    completed: { label: 'done', color: colors.green, icon: 'checkmark-circle-outline' as const },
-    error: { label: 'failed', color: colors.red, icon: 'alert-circle-outline' as const },
-  }[status]
-
   const input = summarizeToolInput(part)
   const output = toolContentText(part)
   const hasDetails = Boolean(input || output)
+
+  const label =
+    status === 'error'
+      ? `Tool ${part.name} failed`
+      : status === 'completed'
+        ? `Used ${part.name}`
+        : `Using ${part.name}`
 
   return (
     <View style={styles.tool}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Tool ${part.name}, ${statusMeta.label}`}
+        accessibilityLabel={`Tool ${part.name}, ${status}`}
         disabled={!hasDetails}
         onPress={() => setOpen((value) => !value)}
         style={styles.toolHeader}
       >
-        <View style={styles.toolIcon}>
-          <Ionicons name="construct-outline" size={14} color={colors.textMuted} />
-        </View>
-        <Text style={styles.toolName} numberOfLines={1}>
-          {part.name}
+        <Text
+          style={[styles.toolName, status === 'error' && styles.toolNameError]}
+          numberOfLines={1}
+        >
+          {label}
         </Text>
         {status === 'running' || status === 'streaming' ? (
-          <ActivityIndicator size="small" color={statusMeta.color} style={styles.toolSpinner} />
-        ) : (
-          <Ionicons name={statusMeta.icon} size={15} color={statusMeta.color} />
-        )}
-        <Text style={[styles.toolStatus, { color: statusMeta.color }]}>{statusMeta.label}</Text>
-        {hasDetails ? (
-          <Ionicons
-            name={open ? 'chevron-up' : 'chevron-down'}
-            size={14}
-            color={colors.textFaint}
-          />
+          <ActivityIndicator size="small" color={colors.textFaint} style={styles.toolSpinner} />
         ) : null}
       </Pressable>
 
-      {input ? (
-        <Text
-          selectable
-          numberOfLines={open ? undefined : 2}
-          style={[styles.toolInput, status === 'error' && { color: colors.red }]}
-        >
+      {open && input ? (
+        <Text selectable style={[styles.toolInput, status === 'error' && { color: colors.red }]}>
           {input}
         </Text>
       ) : null}
 
-      {output ? (
-        <Text
-          selectable
-          numberOfLines={open ? undefined : 3}
-          style={styles.toolOutput}
-        >
+      {open && output ? (
+        <Text selectable style={styles.toolOutput}>
           {output}
         </Text>
       ) : null}
@@ -341,53 +323,38 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   tool: {
-    backgroundColor: colors.bgElevated,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
     gap: spacing.xs,
   },
   toolHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-  },
-  toolIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-    backgroundColor: colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 6,
   },
   toolName: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '600',
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '500',
     flexShrink: 1,
   },
-  toolSpinner: {
-    transform: [{ scale: 0.65 }],
-    marginLeft: 'auto',
+  toolNameError: {
+    color: colors.red,
   },
-  toolStatus: {
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginLeft: 'auto',
+  toolSpinner: {
+    transform: [{ scale: 0.6 }],
   },
   toolInput: {
     color: colors.textMuted,
     fontFamily: font.mono,
     fontSize: 11.5,
     lineHeight: 17,
+    paddingLeft: 2,
   },
   toolOutput: {
     color: colors.textFaint,
     fontFamily: font.mono,
     fontSize: 11,
     lineHeight: 16,
+    paddingLeft: 2,
   },
   errorBox: {
     flexDirection: 'row',

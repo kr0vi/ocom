@@ -122,11 +122,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: 'transparent',
     paddingLeft: spacing.lg,
     paddingRight: spacing.sm,
     paddingVertical: spacing.sm,
   },
   inputRowFocused: {
+    borderColor: colors.borderBright,
   },
   input: {
     flex: 1,

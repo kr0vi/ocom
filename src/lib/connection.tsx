@@ -8,7 +8,7 @@ import React, {
   useRef,
   useState,
 } from 'react'
-import { Platform } from 'react-native'
+import { AppState, Platform } from 'react-native'
 
 import { OpenCodeApi, normalizeBaseUrl, parsePairLink, probeConnection, redeemPairLink } from './api'
 import { EventStream, type EventStatus } from './events'
@@ -142,6 +142,26 @@ export function ConnectionProvider({ children }: { children: React.ReactNode }) 
       streamRef.current = null
     }
   }, [startStream])
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || !mountedRef.current) return
+      const stream = streamRef.current
+      if (!stream) return
+
+      // Coming back from the background: drop a half-dead stream so it
+      // reconnects immediately, otherwise just refresh the visible screens.
+      if (stream.getStatus() !== 'live') {
+        stream.stop()
+        stream.start()
+        return
+      }
+
+      setResyncToken((value) => value + 1)
+    })
+
+    return () => subscription.remove()
+  }, [])
 
   const pairWithLink = useCallback(
     async (link: string) => {
